@@ -22,6 +22,7 @@ type
     function GetEnumerator: IEnumerator<T>;
     function GetValues: IList<T>;
     procedure Initialize;
+    constructor Create(Values: TArray<T>); overload;
 
     function Add(Value: T): Integer; overload;
     procedure Add(Values: TArray<T>); overload;
@@ -37,15 +38,9 @@ type
     function Join(Separator, Before, After: string): string; overload;
     function Join(Separator: string = ','): string; overload;
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
-
-    constructor Create(Values: TArray<T>); overload;
-    constructor Create(dummy: Boolean); overload;
   end;
 
 implementation
-
-uses
-  System.Variants;
 
 function TBetterArray<T>.Add(Value: T): Integer;
 begin
@@ -71,11 +66,6 @@ end;
 function TBetterArray<T>.Count: Integer;
 begin
   Result := GetValues.Count;
-end;
-
-constructor TBetterArray<T>.Create(dummy: Boolean);
-begin
-  Initialize;
 end;
 
 constructor TBetterArray<T>.Create(Values: TArray<T>);
