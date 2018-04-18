@@ -13,6 +13,7 @@ type
   TBetterArray<T> = record
   private
     FValues: IList<T>;
+    function GetItem(Index: Integer): T;
   public
     class operator Implicit(AType: TArray<T>): TBetterArray<T>;
     class operator Implicit(AType: TBetterArray<T>): string;
@@ -33,11 +34,15 @@ type
     function First: T;
     function FirstIndexOf(Value: T): Integer;
     function Get(Index: Integer): T;
+    property Items[Index: Integer]: T read GetItem; default;
     function LastIndexOf(Value: T): Integer;
     function Last: T;
     function Join(Separator, Before, After: string): string; overload;
     function Join(Separator: string = ','): string; overload;
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
+    function Reverse: TBetterArray<T>;
+    function Sort: TBetterArray<T>; overload;
+    function Sort(const AComparer: IComparer<T>): TBetterArray<T>; overload;
   end;
 
 implementation
@@ -106,6 +111,11 @@ begin
   Result := TDUnitXIEnumerator<T>.Create(GetValues);
 end;
 
+function TBetterArray<T>.GetItem(Index: Integer): T;
+begin
+  Result := GetValues.Items[Index];
+end;
+
 function TBetterArray<T>.GetValues: IList<T>;
 begin
   if not Assigned(FValues) then
@@ -142,6 +152,24 @@ end;
 function TBetterArray<T>.LastIndexOf(Value: T): Integer;
 begin
   Result := GetValues.LastIndexOf(Value);
+end;
+
+function TBetterArray<T>.Reverse: TBetterArray<T>;
+begin
+  GetValues.Reverse;
+  Result := Self;
+end;
+
+function TBetterArray<T>.Sort(const AComparer: IComparer<T>): TBetterArray<T>;
+begin
+  GetValues.Sort(AComparer);
+  Result := Self;
+end;
+
+function TBetterArray<T>.Sort: TBetterArray<T>;
+begin
+  GetValues.Sort;
+  Result := Self;
 end;
 
 procedure TBetterArray<T>.Initialize;

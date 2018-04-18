@@ -5,6 +5,7 @@ interface
 uses
   TestFramework,
   System.Generics.Collections,
+  System.Generics.Defaults,
   BetterArray,
   DUnitX.Generics;
 
@@ -26,6 +27,9 @@ type
     procedure LastIndexOf;
     procedure Join;
     procedure JoinQuoted;
+    procedure Sort;
+    procedure SortWithComparer;
+    procedure Reverse;
   end;
 
 implementation
@@ -82,6 +86,17 @@ begin
   CheckEquals(4, FSUT.LastIndexOf(9));
 end;
 
+procedure TBetterArrayTests.Reverse;
+begin
+  FSUT.Reverse;
+  CheckEquals(2, FSUT[0]);
+  CheckEquals(9, FSUT[1]);
+  CheckEquals(9, FSUT[2]);
+  CheckEquals(1, FSUT[3]);
+  CheckEquals(7, FSUT[4]);
+  CheckEquals(13, FSUT[5]);
+end;
+
 procedure TBetterArrayTests.Join;
 begin
   FSUT := [13, 7, 1992];
@@ -108,6 +123,50 @@ procedure TBetterArrayTests.SetUp;
 begin
   inherited;
   FSUT := [13, 7, 1, 9, 9, 2];
+end;
+
+procedure TBetterArrayTests.Sort;
+begin
+  FSUT.Sort;
+  CheckEquals(1, FSUT[0]);
+  CheckEquals(2, FSUT[1]);
+  CheckEquals(7, FSUT[2]);
+  CheckEquals(9, FSUT[3]);
+  CheckEquals(9, FSUT[4]);
+  CheckEquals(13, FSUT[5]);
+end;
+
+procedure TBetterArrayTests.SortWithComparer;
+var
+  EvenToOddNumbers: TComparison<Integer>;
+begin
+  EvenToOddNumbers :=
+    function(const Left, Right: Integer): Integer
+    begin
+      if Left = Right then
+        Exit(0);
+
+      if Odd(Left) then
+        if Odd(Right) then
+          Exit(Left - Right)
+        else
+          Exit(-1);
+
+      if Odd(Right) then
+        Exit(1)
+      else
+        Exit(Left - Right);
+    end;
+
+  FSUT := [1, 2, 3, 4, 5, 6, 7, 8];
+  FSUT.Sort(TDelegatedComparer<Integer>.Construct(EvenToOddNumbers));
+  CheckEquals(1, FSUT[0]);
+  CheckEquals(3, FSUT[1]);
+  CheckEquals(5, FSUT[2]);
+  CheckEquals(7, FSUT[3]);
+  CheckEquals(2, FSUT[4]);
+  CheckEquals(4, FSUT[5]);
+  CheckEquals(6, FSUT[6]);
 end;
 
 initialization
