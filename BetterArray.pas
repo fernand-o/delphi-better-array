@@ -14,6 +14,7 @@ type
   private
     FValues: IList<T>;
     function GetItem(Index: Integer): T;
+    function TypeIsClass: Boolean;
   public
     class operator Implicit(AType: TArray<T>): TBetterArray<T>;
     class operator Implicit(AType: TBetterArray<T>): string;
@@ -30,9 +31,11 @@ type
     procedure Clear;
     function Contains(Value: T): Boolean;
     function Count: Integer;
+    function Compact: TBetterArray<T>;
     function Exists(Value: T): Boolean;
     function First: T;
     function FirstIndexOf(Value: T): Integer;
+    procedure FreeAll;
     function Get(Index: Integer): T;
     property Items[Index: Integer]: T read GetItem; default;
     function LastIndexOf(Value: T): Integer;
@@ -43,6 +46,7 @@ type
     function Reverse: TBetterArray<T>;
     function Sort: TBetterArray<T>; overload;
     function Sort(const AComparer: IComparer<T>): TBetterArray<T>; overload;
+    function ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
   end;
 
 implementation
@@ -61,6 +65,17 @@ procedure TBetterArray<T>.Clear;
 begin
   if Assigned(FValues) then
     FValues.Clear;
+end;
+
+function TBetterArray<T>.Compact: TBetterArray<T>;
+var
+  Item: T;
+  Comparer: IEqualityComparer<T>;
+begin
+  Comparer := TEqualityComparer<T>.Default;
+  for Item in Self do
+    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
+      Result.Add(Item);
 end;
 
 function TBetterArray<T>.Contains(Value: T): Boolean;
@@ -96,6 +111,17 @@ end;
 function TBetterArray<T>.FirstIndexOf(Value: T): Integer;
 begin
   Result := GetValues.FirstIndexOf(Value);
+end;
+
+procedure TBetterArray<T>.FreeAll;
+var
+  Item: T;
+begin
+  if not TypeIsClass then
+    Exit;
+
+  for Item in Self do
+    TValue.From<T>(Item).AsObject.Free;
 end;
 
 function TBetterArray<T>.Get(Index: Integer): T;
@@ -166,6 +192,14 @@ begin
   Result := Self;
 end;
 
+function TBetterArray<T>.ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
+var
+  Item: T;
+begin
+  for Item in Self do
+    Result.Add(Func(Item));
+end;
+
 function TBetterArray<T>.Sort: TBetterArray<T>;
 begin
   GetValues.Sort;
@@ -198,6 +232,11 @@ end;
 function TBetterArray<T>.JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
 begin
   Result := Join(Separator, QuoteString, QuoteString);
+end;
+
+function TBetterArray<T>.TypeIsClass: Boolean;
+begin
+  Result := TRttiContext.Create.GetType(TypeInfo(T)).TypeKind = tkClass
 end;
 
 end.
