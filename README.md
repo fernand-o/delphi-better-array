@@ -1,4 +1,4 @@
-## Definition
+## Overview
 `TBetterArray<T>` is just a workaround to provide instance methods for arrays.
 
 ## Why?
@@ -6,7 +6,9 @@ The generic class `TArray<T>` was introduced in Deplhi XE2 to give a better appr
 Although it was a huge step for deplhi, `TArray<T>` is far behind array implementations of almost any modern programming languages.
 
 ## Usage:
-The usage is the same of `TArray<T>`, however there are some examples described bellow:
+The usage is the same of `TArray<T>`, however there are some examples described bellow.
+
+For the complete list of available methods, please check the [source](https://github.com/fernand-o/delphi-better-array/blob/master/BetterArray.pas#L29) and the examples at the [test unit](https://github.com/fernand-o/delphi-better-array/blob/master/tests/BetterArrayTests.pas).
 
 ### Simple types
 ```[delphi]
@@ -15,11 +17,12 @@ var
 begin
   People := ['Fernando', 'John', 'Paul'];
   
-  People.Count;       // 3
-  People.Join('-');   // 'Fernando-John-Paul'
-  People.First;       // 'Fernando'  
-  People.Reverse;     // ['Paul', 'John', 'Fernando']  
-  People.Add('Bill'); // ['Paul', 'John', 'Fernando', 'Bill']
+  People.Count;             // 3
+  People.Join('-');         // 'Fernando-John-Paul'
+  People.First;             // 'Fernando'  
+  People.Contains('Trump'); // False
+  People.Reverse;           // ['Paul', 'John', 'Fernando']  
+  People.Add('Bill');       // ['Paul', 'John', 'Fernando', 'Bill']
 end;
   
 ```
@@ -69,3 +72,9 @@ begin
   Coffees.Get(1);  // TCoffee instance
   Coffees.Get(5);  // nil
 ```
+
+## Credits
+https://github.com/VSoftTechnologies/DUnitX
+
+The `DUnitx.Generics` unit, is a version of the `DUnitX.Generics` from the DUnitX repo, with a few modifications.
+I didn't forked the repo and used it as submodule, because i want to keep this library with as few dependency as possible.
