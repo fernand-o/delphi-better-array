@@ -6,13 +6,23 @@ uses
   System.Generics.Collections,
   System.Generics.Defaults,
   System.Rtti,
-  System.SysUtils,
-  DUnitX.Generics;
+  System.SysUtils;
 
 type
   TBetterArray<T> = record
+  type
+    TEnumerator = class
+    private
+      FValue: ^TBetterArray<T>;
+      FIndex: integer;
+      function GetCurrent: T;
+    public
+      constructor Create(var AValue: TBetterArray<T>);
+      function MoveNext: Boolean;
+      property Current: T read GetCurrent;
+    end;
   private
-    FValues: IList<T>;
+    FItems: TArray<T>;
     function GetItem(Index: Integer): T;
     function TypeIsClass: Boolean;
   public
@@ -21,9 +31,7 @@ type
     class operator Implicit(AType: TBetterArray<T>): TArray<T>;
     class operator Implicit(AType: TArray<string>): TBetterArray<T>;
     class operator Explicit(AType: TArray<T>): TBetterArray<T>;
-    function GetEnumerator: IEnumerator<T>;
-    function GetValues: IList<T>;
-    procedure Initialize;
+    function GetEnumerator: TEnumerator;
     constructor Create(Values: TArray<T>); overload;
 
     function Add(Value: T): Integer; overload;
@@ -31,15 +39,20 @@ type
     procedure Clear;
     function Contains(Value: T): Boolean;
     function Count: Integer;
-    function Compact: TBetterArray<T>;
-    function Exists(Value: T): Boolean;
+    function Compact: TBetterArray<T>; overload;
+    function Compact(Items: TBetterArray<T>): TBetterArray<T>; overload;
+    function Copy: TBetterArray<T>;
     function First: T;
     function FirstIndexOf(Value: T): Integer;
     procedure FreeAll;
     function Get(Index: Integer): T;
+    function IndexOf(Value: T; const Comparer: IComparer<T>): Integer; overload;
+    function IndexOf(Value: T): Integer; overload;
     property Items[Index: Integer]: T read GetItem; default;
-    function LastIndexOf(Value: T): Integer;
     function Last: T;
+    function LastIndexOf(Value: T): Integer; overload;
+    function LastIndexOf(Value: T; const Comparer: IComparer<T>): Integer; overload;
+    function Map(Func: TFunc<T, T>): TBetterArray<T>;
     function Join(Separator, Before, After: string): string; overload;
     function Join(Separator: string = ','): string; overload;
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
@@ -53,49 +66,57 @@ implementation
 
 function TBetterArray<T>.Add(Value: T): Integer;
 begin
-  Result := GetValues.Add(Value);
+  FItems := FItems + [Value];
+  Result := Pred(Count);
 end;
 
 procedure TBetterArray<T>.Add(Values: TArray<T>);
 begin
-  GetValues.AddRange(Values);
+  FItems := FItems + Values;
 end;
 
 procedure TBetterArray<T>.Clear;
 begin
-  if Assigned(FValues) then
-    FValues.Clear;
+  FItems := [];
 end;
 
 function TBetterArray<T>.Compact: TBetterArray<T>;
+begin
+  Result := Compact(Self);
+end;
+
+function TBetterArray<T>.Compact(Items: TBetterArray<T>): TBetterArray<T>;
 var
   Item: T;
   Comparer: IEqualityComparer<T>;
 begin
   Comparer := TEqualityComparer<T>.Default;
-  for Item in Self do
+  for Item in Items do
     if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
       Result.Add(Item);
 end;
 
 function TBetterArray<T>.Contains(Value: T): Boolean;
 begin
-  Result := GetValues.Contains(Value);
+  Result := IndexOf(Value) <> -1;
+end;
+
+function TBetterArray<T>.Copy: TBetterArray<T>;
+var
+  Item: T;
+begin
+  for Item in FItems do
+    Result.Add(Item);
 end;
 
 function TBetterArray<T>.Count: Integer;
 begin
-  Result := GetValues.Count;
+  Result := Length(FItems);
 end;
 
 constructor TBetterArray<T>.Create(Values: TArray<T>);
 begin
-  GetValues.AddRange(Values);
-end;
-
-function TBetterArray<T>.Exists(Value: T): Boolean;
-begin
-  Result := GetValues.Contains(Value);
+  Add(Values);
 end;
 
 class operator TBetterArray<T>.Explicit(AType: TArray<T>): TBetterArray<T>;
@@ -105,12 +126,12 @@ end;
 
 function TBetterArray<T>.First: T;
 begin
-  Result := GetValues.First;
+  Result := Get(0);
 end;
 
 function TBetterArray<T>.FirstIndexOf(Value: T): Integer;
 begin
-  Result := GetValues.FirstIndexOf(Value);
+  Result := IndexOf(Value);
 end;
 
 procedure TBetterArray<T>.FreeAll;
@@ -129,25 +150,17 @@ begin
   if (Index < 0) or (Index >= Count) then
     Exit(TValue.Empty.AsType<T>);
 
-  Result := GetValues.Items[Index];
+  Result := FItems[Index];
 end;
 
-function TBetterArray<T>.GetEnumerator: IEnumerator<T>;
+function TBetterArray<T>.GetEnumerator: TEnumerator;
 begin
-  Result := TDUnitXIEnumerator<T>.Create(GetValues);
+  Result := TEnumerator.Create(Self);
 end;
 
 function TBetterArray<T>.GetItem(Index: Integer): T;
 begin
-  Result := GetValues.Items[Index];
-end;
-
-function TBetterArray<T>.GetValues: IList<T>;
-begin
-  if not Assigned(FValues) then
-    Initialize;
-
-  Result := FValues;
+  Result := FItems[Index];
 end;
 
 class operator TBetterArray<T>.Implicit(AType: TArray<T>): TBetterArray<T>;
@@ -162,12 +175,35 @@ end;
 
 class operator TBetterArray<T>.Implicit(AType: TBetterArray<T>): TArray<T>;
 begin
-  Result := AType.FValues.ToArray;
+  Result := AType.FItems;
 end;
 
 function TBetterArray<T>.Last: T;
 begin
-  Result := GetValues.Last;
+  Result := Get(Pred(Count));
+end;
+
+function TBetterArray<T>.LastIndexOf(Value: T; const Comparer: IComparer<T>): Integer;
+begin
+  for Result := High(FItems) downto Low(FItems) do
+    if Comparer.Compare(FItems[Result], Value) = 0 then
+      Exit;
+  Result := -1;
+end;
+
+function TBetterArray<T>.LastIndexOf(Value: T): Integer;
+begin
+  Result := LastIndexOf(Value, TComparer<T>.Default);
+end;
+
+function TBetterArray<T>.Map(Func: TFunc<T, T>): TBetterArray<T>;
+var
+  Item: T;
+begin
+  for Item in FItems do
+    Result.Add(Func(Item));
+
+  Result := Compact(Result);
 end;
 
 class operator TBetterArray<T>.Implicit(AType: TArray<string>): TBetterArray<T>;
@@ -175,21 +211,25 @@ begin
   Result.Create(TArray<T>(AType));
 end;
 
-function TBetterArray<T>.LastIndexOf(Value: T): Integer;
+function TBetterArray<T>.Reverse: TBetterArray<T>;
+var
+  I: Integer;
 begin
-  Result := GetValues.LastIndexOf(Value);
+  Result.Clear;
+  for I := High(FItems) downto Low(FItems) do
+    Result.Add(FItems[I]);
 end;
 
-function TBetterArray<T>.Reverse: TBetterArray<T>;
+function TBetterArray<T>.Sort: TBetterArray<T>;
 begin
-  GetValues.Reverse;
-  Result := Self;
+  Result := Copy;
+  TArray.Sort<T>(Result.FItems);
 end;
 
 function TBetterArray<T>.Sort(const Comparison: TComparison<T>): TBetterArray<T>;
 begin
-  GetValues.Sort(TDelegatedComparer<T>.Construct(Comparison));
-  Result := Self;
+  Result := Copy;
+  TArray.Sort<T>(Result.FItems, TDelegatedComparer<T>.Construct(Comparison));
 end;
 
 function TBetterArray<T>.ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
@@ -200,15 +240,17 @@ begin
     Result.Add(Func(Item));
 end;
 
-function TBetterArray<T>.Sort: TBetterArray<T>;
+function TBetterArray<T>.IndexOf(Value: T): Integer;
 begin
-  GetValues.Sort;
-  Result := Self;
+  Result := IndexOf(Value, TComparer<T>.Default);
 end;
 
-procedure TBetterArray<T>.Initialize;
+function TBetterArray<T>.IndexOf(Value: T; const Comparer: IComparer<T>): Integer;
 begin
-  FValues := TDUnitXList<T>.Create;
+  for Result := Low(FItems) to High(FItems) do
+    if Comparer.Compare(FItems[Result], Value) = 0 then
+      Exit;
+  Result := -1;
 end;
 
 function TBetterArray<T>.Join(Separator: string = ','): string;
@@ -223,7 +265,7 @@ var
   Item: T;
   StrValues: TArray<string>;
 begin
-  for Item in FValues do
+  for Item in FItems do
     StrValues := StrValues + [Format(ItemFmt, [Before, TValue.From<T>(Item).ToString, After])];
 
   Result := ''.Join(Separator, StrValues);
@@ -237,6 +279,23 @@ end;
 function TBetterArray<T>.TypeIsClass: Boolean;
 begin
   Result := TRttiContext.Create.GetType(TypeInfo(T)).TypeKind = tkClass
+end;
+
+constructor TBetterArray<T>.TEnumerator.Create(var AValue: TBetterArray<T>);
+begin
+  FValue := @AValue;
+  FIndex := -1;
+end;
+
+function TBetterArray<T>.TEnumerator.GetCurrent: T;
+begin
+  Result := FValue^.FItems[FIndex];
+end;
+
+function TBetterArray<T>.TEnumerator.MoveNext: Boolean;
+begin
+  Result := FIndex < High(FValue^.FItems);
+  Inc(FIndex);
 end;
 
 end.
