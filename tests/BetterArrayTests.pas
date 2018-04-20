@@ -54,6 +54,7 @@ type
     procedure Reverse;
     procedure SortWithComparer;
     procedure ToStrings;
+    procedure Map;
   end;
 
 implementation
@@ -262,6 +263,27 @@ begin
   CheckEquals(2, FSUT.Compact.Count);
   CheckEquals('Paul', FSUT.Compact[0].Name);
   CheckEquals('Ringo', FSUT.Compact[1].Name);
+end;
+
+procedure TBetterArrayClassTests.Map;
+var
+  RemoveOlderThan70: TFunc<TDummyClass, TDummyClass>;
+begin
+  RemoveOlderThan70 :=
+    function(Item: TDummyClass): TDummyClass
+    begin
+      if Item.Age > 70 then
+      begin
+        Item.Free;
+        Exit(nil);
+      end;
+
+      Result := Item;
+    end;
+  FSUT := FSUT.Map(RemoveOlderThan70);
+  CheckEquals(2, FSUT.Count);
+  CheckEquals('John', FSUT[0].Name);
+  CheckEquals('George', FSUT[1].Name);
 end;
 
 procedure TBetterArrayClassTests.Reverse;

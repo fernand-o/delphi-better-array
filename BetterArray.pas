@@ -201,13 +201,16 @@ end;
 
 function TBetterArray<T>.Map(Func: TFunc<T, T>): TBetterArray<T>;
 var
-  Item: T;
+  Item, NewItem: T;
   Comparer: IEqualityComparer<T>;
 begin
   Comparer := TEqualityComparer<T>.Default;
   for Item in FItems do
-    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
-      Result.Add(Func(Item));
+  begin
+    NewItem := Func(Item);
+    if not Comparer.Equals(NewItem, TValue.Empty.AsType<T>) then
+      Result.Add(NewItem);
+  end;
 end;
 
 class operator TBetterArray<T>.Implicit(AType: TArray<string>): TBetterArray<T>;
