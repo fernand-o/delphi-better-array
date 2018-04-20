@@ -82,7 +82,10 @@ end;
 
 function TBetterArray<T>.Compact: TBetterArray<T>;
 begin
-  Result := Compact(Self);
+  Result := Map(function(Item: T): T
+    begin
+      Result := Item;
+    end);
 end;
 
 function TBetterArray<T>.Compact(Items: TBetterArray<T>): TBetterArray<T>;
@@ -141,7 +144,7 @@ begin
   if not TypeIsClass then
     Exit;
 
-  for Item in Self do
+  for Item in FItems do
     TValue.From<T>(Item).AsObject.Free;
 end;
 
@@ -199,11 +202,12 @@ end;
 function TBetterArray<T>.Map(Func: TFunc<T, T>): TBetterArray<T>;
 var
   Item: T;
+  Comparer: IEqualityComparer<T>;
 begin
+  Comparer := TEqualityComparer<T>.Default;
   for Item in FItems do
-    Result.Add(Func(Item));
-
-  Result := Compact(Result);
+    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
+      Result.Add(Func(Item));
 end;
 
 class operator TBetterArray<T>.Implicit(AType: TArray<string>): TBetterArray<T>;
@@ -236,7 +240,7 @@ function TBetterArray<T>.ToStrings(Func: TFunc<T, string>): TBetterArray<string>
 var
   Item: T;
 begin
-  for Item in Self do
+  for Item in FItems do
     Result.Add(Func(Item));
 end;
 
