@@ -121,7 +121,7 @@ end;
 
 procedure TBetterArrayIntegerTests.Reverse;
 begin
-  FSUT.Reverse;
+  FSUT := FSUT.Reverse;
   CheckEquals(2, FSUT[0]);
   CheckEquals(9, FSUT[1]);
   CheckEquals(9, FSUT[2]);
@@ -160,7 +160,7 @@ end;
 
 procedure TBetterArrayIntegerTests.Sort;
 begin
-  FSUT.Sort;
+  FSUT := FSUT.Sort;
   CheckEquals(1, FSUT[0]);
   CheckEquals(2, FSUT[1]);
   CheckEquals(7, FSUT[2]);
@@ -192,7 +192,7 @@ begin
     end;
 
   FSUT := [1, 2, 3, 4, 5, 6, 7, 8];
-  FSUT.Sort(EvenToOddNumbers);
+  FSUT := FSUT.Sort(EvenToOddNumbers);
   CheckEquals(1, FSUT[0]);
   CheckEquals(3, FSUT[1]);
   CheckEquals(5, FSUT[2]);
@@ -248,7 +248,7 @@ end;
 
 procedure TBetterArrayClassTests.Reverse;
 begin
-  FSUT.Reverse;
+  FSUT := FSUT.Reverse;
   CheckEquals('George', FSUT[0].Name);
   CheckEquals('Paul', FSUT[1].Name);
   CheckEquals('Ringo', FSUT[2].Name);
@@ -276,7 +276,7 @@ begin
       Result := Left.Age - Right.Age;
     end;
 
-  FSUT.Sort(OrderByAge);
+  FSUT := FSUT.Sort(OrderByAge);
   CheckEquals('John', FSUT[0].Name);
   CheckEquals('George', FSUT[1].Name);
   CheckEquals('Paul', FSUT[2].Name);
@@ -287,8 +287,8 @@ end;
 
 constructor TDummyClass.Create(Name: string; Age: Integer);
 begin
-  self.Name := Name;
-  self.Age := Age;
+  Self.Name := Name;
+  Self.Age := Age;
 end;
 
 initialization
