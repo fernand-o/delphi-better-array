@@ -72,9 +72,3 @@ begin
   Coffees.Get(1);  // TCoffee instance
   Coffees.Get(5);  // nil
 ```
-
-## Credits
-https://github.com/VSoftTechnologies/DUnitX
-
-The `DUnitx.Generics` unit, is a version of the `DUnitX.Generics` from the DUnitX repo, with a few modifications.
-I didn't forked the repo and used it as submodule, because i want to keep this library with as few dependency as possible.
