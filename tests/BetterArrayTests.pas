@@ -28,6 +28,7 @@ type
     procedure Get;
     procedure Last;
     procedure LastIndexOf;
+    procedure Map;
     procedure Join;
     procedure JoinQuoted;
     procedure Reverse;
@@ -117,6 +118,23 @@ begin
   CheckEquals(1, FSUT.LastIndexOf(7));
   CheckEquals(0, FSUT.LastIndexOf(13));
   CheckEquals(4, FSUT.LastIndexOf(9));
+end;
+
+procedure TBetterArrayIntegerTests.Map;
+begin
+  FSUT := FSUT.Map(
+    function(Value: Integer): Integer
+    begin
+      Result := Value + 10;
+    end
+  );
+
+  CheckEquals(23, FSUT[0]);
+  CheckEquals(17, FSUT[1]);
+  CheckEquals(11, FSUT[2]);
+  CheckEquals(19, FSUT[3]);
+  CheckEquals(19, FSUT[4]);
+  CheckEquals(12, FSUT[5]);
 end;
 
 procedure TBetterArrayIntegerTests.Reverse;
