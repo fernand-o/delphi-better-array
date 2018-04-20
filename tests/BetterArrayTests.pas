@@ -192,7 +192,7 @@ begin
     end;
 
   FSUT := [1, 2, 3, 4, 5, 6, 7, 8];
-  FSUT.Sort(TDelegatedComparer<Integer>.Construct(EvenToOddNumbers));
+  FSUT.Sort(EvenToOddNumbers);
   CheckEquals(1, FSUT[0]);
   CheckEquals(3, FSUT[1]);
   CheckEquals(5, FSUT[2]);
@@ -276,7 +276,7 @@ begin
       Result := Left.Age - Right.Age;
     end;
 
-  FSUT.Sort(TDelegatedComparer<TDummyClass>.Construct(OrderByAge));
+  FSUT.Sort(OrderByAge);
   CheckEquals('John', FSUT[0].Name);
   CheckEquals('George', FSUT[1].Name);
   CheckEquals('Paul', FSUT[2].Name);

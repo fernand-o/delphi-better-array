@@ -45,7 +45,7 @@ type
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
     function Reverse: TBetterArray<T>;
     function Sort: TBetterArray<T>; overload;
-    function Sort(const AComparer: IComparer<T>): TBetterArray<T>; overload;
+    function Sort(const Comparison: TComparison<T>): TBetterArray<T>; overload;
     function ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
   end;
 
@@ -186,9 +186,9 @@ begin
   Result := Self;
 end;
 
-function TBetterArray<T>.Sort(const AComparer: IComparer<T>): TBetterArray<T>;
+function TBetterArray<T>.Sort(const Comparison: TComparison<T>): TBetterArray<T>;
 begin
-  GetValues.Sort(AComparer);
+  GetValues.Sort(TDelegatedComparer<T>.Construct(Comparison));
   Result := Self;
 end;
 
