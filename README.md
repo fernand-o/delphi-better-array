@@ -3,7 +3,7 @@
 
 ## Why?
 The generic class `TArray<T>` was introduced in Deplhi XE2 to give a better approach of manipulating dynamic arrays. 
-Although it was a huge step for delphi, `TArray<T>` is far behind array implementations of any modern programming languages.
+Although it was a huge step for delphi, `TArray<T>` is painful to deal with, any single interation requires lots of code.
 
 ## Usage
 The usage is basically the same of `TArray<T>`, however there are some examples described bellow.
