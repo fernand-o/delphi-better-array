@@ -50,7 +50,8 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure Compact;
+    procedure Remove;
+    procedure FreeItem;
     procedure Reverse;
     procedure SortWithComparer;
     procedure ToStrings;
@@ -254,15 +255,14 @@ begin
   CheckEquals('John & Ringo & Paul & George', FSUT.ToStrings(ToStringFunc).Join(' & '));
 end;
 
-procedure TBetterArrayClassTests.Compact;
+procedure TBetterArrayClassTests.FreeItem;
 begin
-  Exit; // TODO: doesn't work
-  FSUT[0].Free;
-  FSUT[3].Free;
+  FSUT.FreeItem(3);
+  FSUT.FreeItem(0);
 
-  CheckEquals(2, FSUT.Compact.Count);
-  CheckEquals('Paul', FSUT.Compact[0].Name);
-  CheckEquals('Ringo', FSUT.Compact[1].Name);
+  CheckEquals(2, FSUT.Count);
+  CheckEquals('Ringo', FSUT[0].Name);
+  CheckEquals('Paul', FSUT[1].Name);
 end;
 
 procedure TBetterArrayClassTests.Map;
@@ -284,6 +284,20 @@ begin
   CheckEquals(2, FSUT.Count);
   CheckEquals('John', FSUT[0].Name);
   CheckEquals('George', FSUT[1].Name);
+end;
+
+procedure TBetterArrayClassTests.Remove;
+var
+  Paul: TDummyClass;
+begin
+  Paul := FSUT.Get(1);
+  try
+    FSUT.Remove(1);
+    CheckEquals(3, FSUT.Count);
+    CheckTrue(Assigned(Paul));
+  finally
+    Paul.Free;
+  end;
 end;
 
 procedure TBetterArrayClassTests.Reverse;

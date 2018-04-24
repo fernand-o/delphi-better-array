@@ -25,6 +25,7 @@ type
     FItems: TArray<T>;
     function GetItem(Index: Integer): T;
     function TypeIsClass: Boolean;
+    function IndexIsValid(Index: Integer): Boolean;
   public
     class operator Implicit(AType: TArray<T>): TBetterArray<T>;
     class operator Implicit(AType: TBetterArray<T>): string;
@@ -44,6 +45,7 @@ type
     function Copy: TBetterArray<T>;
     function First: T;
     function FirstIndexOf(Value: T): Integer;
+    procedure FreeItem(Index: Integer);
     procedure FreeAll;
     function Get(Index: Integer): T;
     function IndexOf(Value: T; const Comparer: IComparer<T>): Integer; overload;
@@ -56,6 +58,7 @@ type
     function Join(Separator, Before, After: string): string; overload;
     function Join(Separator: string = ','): string; overload;
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
+    procedure Remove(Index: Integer);
     function Reverse: TBetterArray<T>;
     function Sort: TBetterArray<T>; overload;
     function Sort(const Comparison: TComparison<T>): TBetterArray<T>; overload;
@@ -148,6 +151,17 @@ begin
     TValue.From<T>(Item).AsObject.Free;
 end;
 
+procedure TBetterArray<T>.FreeItem(Index: Integer);
+begin
+  if not IndexIsValid(Index) then
+    Exit;
+
+  if TypeIsClass then
+    TValue.From<T>(FItems[Index]).AsObject.Free;
+
+  Remove(Index);
+end;
+
 function TBetterArray<T>.Get(Index: Integer): T;
 begin
   if (Index < 0) or (Index >= Count) then
@@ -218,6 +232,11 @@ begin
   Result.Create(TArray<T>(AType));
 end;
 
+procedure TBetterArray<T>.Remove(Index: Integer);
+begin
+  Delete(FItems, Index, 1);
+end;
+
 function TBetterArray<T>.Reverse: TBetterArray<T>;
 var
   I: Integer;
@@ -245,6 +264,11 @@ var
 begin
   for Item in FItems do
     Result.Add(Func(Item));
+end;
+
+function TBetterArray<T>.IndexIsValid(Index: Integer): Boolean;
+begin
+  Result := (Index >= 0) and (Index < Count);
 end;
 
 function TBetterArray<T>.IndexOf(Value: T): Integer;
