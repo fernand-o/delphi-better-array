@@ -68,6 +68,7 @@ type
     function Sort: TBetterArray<T>; overload;
     function Sort(const Comparison: TComparison<T>): TBetterArray<T>; overload;
     function ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
+    function Unique: TBetterArray<T>;
   end;
 
 implementation
@@ -354,6 +355,23 @@ end;
 function TBetterArray<T>.TypeIsClass: Boolean;
 begin
   Result := TRttiContext.Create.GetType(TypeInfo(T)).TypeKind = tkClass
+end;
+
+function TBetterArray<T>.Unique: TBetterArray<T>;
+var
+  List: TList<T>;
+  Item: T;
+begin
+  List := TList<T>.Create;
+  try
+    for Item in FItems do
+      if not List.Contains(Item) then
+        List.Add(Item);
+
+    Result := List.ToArray;
+  finally
+    List.Free;
+  end;
 end;
 
 constructor TBetterArray<T>.TEnumerator.Create(var AValue: TBetterArray<T>);

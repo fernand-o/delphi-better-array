@@ -36,9 +36,10 @@ type
     procedure Sort;
     procedure SortWithComparer;
     procedure ToStrings;
+    procedure Unique;
   end;
 
-  TDummyClass = class
+  TBeatle = class
     Name: string;
     Age: Integer;
     constructor Create(Name: string; Age: Integer);
@@ -46,7 +47,7 @@ type
 
   TBetterArrayClassTests = class(TTestCase)
   private
-    FSUT: TBetterArray<TDummyClass>;
+    FSUT: TBetterArray<TBeatle>;
   public
     procedure SetUp; override;
     procedure TearDown; override;
@@ -57,6 +58,7 @@ type
     procedure SortWithComparer;
     procedure ToStrings;
     procedure Map;
+    procedure Unique;
   end;
 
 implementation
@@ -277,6 +279,14 @@ begin
   CheckEquals('13/7/1992', FSUT.ToStrings(ToStringFunc).Join('/'));
 end;
 
+procedure TBetterArrayIntegerTests.Unique;
+begin
+  FSUT := [1, 2, 2, 3, 1, 3, 4, 5, 5];
+  FSUT := FSUT.Unique;
+  CheckEquals(5, FSUT.Count);
+  CheckEquals('1,2,3,4,5', FSUT.Join);
+end;
+
 procedure TBetterArrayClassTests.TearDown;
 begin
   inherited;
@@ -285,15 +295,24 @@ end;
 
 procedure TBetterArrayClassTests.ToStrings;
 var
-  ToStringFunc: TFunc<TDummyClass, string>;
+  ToStringFunc: TFunc<TBeatle, string>;
 begin
   ToStringFunc :=
-    function(Item: TDummyClass): string
+    function(Item: TBeatle): string
     begin
       Result := Item.Name;
     end;
 
   CheckEquals('John & Ringo & Paul & George', FSUT.ToStrings(ToStringFunc).Join(' & '));
+end;
+
+procedure TBetterArrayClassTests.Unique;
+begin
+  FSUT.Add(FSUT[0]);
+  FSUT.Add(FSUT[2]);
+  CheckEquals(6, FSUT.Count);
+  FSUT := FSUT.Unique;
+  CheckEquals(4, FSUT.Count);
 end;
 
 procedure TBetterArrayClassTests.FreeItem;
@@ -308,10 +327,10 @@ end;
 
 procedure TBetterArrayClassTests.Map;
 var
-  RemoveOlderThan70: TFunc<TDummyClass, TDummyClass>;
+  RemoveOlderThan70: TFunc<TBeatle, TBeatle>;
 begin
   RemoveOlderThan70 :=
-    function(Item: TDummyClass): TDummyClass
+    function(Item: TBeatle): TBeatle
     begin
       if Item.Age > 70 then
       begin
@@ -329,7 +348,7 @@ end;
 
 procedure TBetterArrayClassTests.Remove;
 var
-  Paul: TDummyClass;
+  Paul: TBeatle;
 begin
   Paul := FSUT.Get(1);
   try
@@ -354,19 +373,19 @@ procedure TBetterArrayClassTests.SetUp;
 begin
   inherited;
   FSUT := [
-    TDummyClass.Create('John', 45),
-    TDummyClass.Create('Ringo', 77),
-    TDummyClass.Create('Paul', 75),
-    TDummyClass.Create('George', 58)
+    TBeatle.Create('John', 45),
+    TBeatle.Create('Ringo', 77),
+    TBeatle.Create('Paul', 75),
+    TBeatle.Create('George', 58)
   ];
 end;
 
 procedure TBetterArrayClassTests.SortWithComparer;
 var
-  OrderByAge: TComparison<TDummyClass>;
+  OrderByAge: TComparison<TBeatle>;
 begin
   OrderByAge :=
-    function(const Left, Right: TDummyClass): Integer
+    function(const Left, Right: TBeatle): Integer
     begin
       Result := Left.Age - Right.Age;
     end;
@@ -378,9 +397,7 @@ begin
   CheckEquals('Ringo', FSUT[3].Name);
 end;
 
-{ TDummyClass }
-
-constructor TDummyClass.Create(Name: string; Age: Integer);
+constructor TBeatle.Create(Name: string; Age: Integer);
 begin
   Self.Name := Name;
   Self.Age := Age;
