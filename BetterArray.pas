@@ -26,6 +26,7 @@ type
     function GetItem(Index: Integer): T;
     function TypeIsClass: Boolean;
     function IndexIsValid(Index: Integer): Boolean;
+    function EmptyValue: T;
   public
     class operator Implicit(AType: TArray<T>): TBetterArray<T>;
     class operator Implicit(AType: TBetterArray<T>): string;
@@ -43,6 +44,7 @@ type
     function Compact: TBetterArray<T>; overload;
     function Compact(Items: TBetterArray<T>): TBetterArray<T>; overload;
     function Copy: TBetterArray<T>;
+    function DeleteIf(Func: TFunc<T, Boolean>): TBetterArray<T>;
     function First: T;
     function FirstIndexOf(Value: T): Integer;
     procedure FreeItem(Index: Integer);
@@ -50,6 +52,7 @@ type
     function Get(Index: Integer): T;
     function IndexOf(Value: T; const Comparer: IComparer<T>): Integer; overload;
     function IndexOf(Value: T): Integer; overload;
+    function IsEmpty: Boolean;
     property Items[Index: Integer]: T read GetItem; default;
     function Last: T;
     function LastIndexOf(Value: T): Integer; overload;
@@ -84,11 +87,14 @@ begin
 end;
 
 function TBetterArray<T>.Compact: TBetterArray<T>;
+var
+  Comparer: IEqualityComparer<T>;
+  Item: T;
 begin
-  Result := Map(function(Item: T): T
-    begin
-      Result := Item;
-    end);
+  Comparer := TEqualityComparer<T>.Default;
+  for Item in FItems do
+    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
+      Result.Add(Item);
 end;
 
 function TBetterArray<T>.Compact(Items: TBetterArray<T>): TBetterArray<T>;
@@ -123,6 +129,25 @@ end;
 constructor TBetterArray<T>.Create(Values: TArray<T>);
 begin
   Add(Values);
+end;
+
+function TBetterArray<T>.DeleteIf(Func: TFunc<T, Boolean>): TBetterArray<T>;
+var
+  Empty: T;
+begin
+  Empty := EmptyValue;
+  Result := Map(
+    function(Item: T): T
+    begin
+      Result := Item;
+      if Func(Item) then
+        Result := Empty;
+    end).Compact;
+end;
+
+function TBetterArray<T>.EmptyValue: T;
+begin
+  Result := TValue.Empty.AsType<T>;
 end;
 
 class operator TBetterArray<T>.Explicit(AType: TArray<T>): TBetterArray<T>;
@@ -165,7 +190,7 @@ end;
 function TBetterArray<T>.Get(Index: Integer): T;
 begin
   if (Index < 0) or (Index >= Count) then
-    Exit(TValue.Empty.AsType<T>);
+    Exit(EmptyValue);
 
   Result := FItems[Index];
 end;
@@ -215,16 +240,10 @@ end;
 
 function TBetterArray<T>.Map(Func: TFunc<T, T>): TBetterArray<T>;
 var
-  Item, NewItem: T;
-  Comparer: IEqualityComparer<T>;
+  Item: T;
 begin
-  Comparer := TEqualityComparer<T>.Default;
   for Item in FItems do
-  begin
-    NewItem := Func(Item);
-    if not Comparer.Equals(NewItem, TValue.Empty.AsType<T>) then
-      Result.Add(NewItem);
-  end;
+    Result.Add(Func(Item));
 end;
 
 class operator TBetterArray<T>.Implicit(AType: TArray<string>): TBetterArray<T>;
@@ -274,6 +293,11 @@ end;
 function TBetterArray<T>.IndexOf(Value: T): Integer;
 begin
   Result := IndexOf(Value, TComparer<T>.Default);
+end;
+
+function TBetterArray<T>.IsEmpty: Boolean;
+begin
+  Result := Count = 0;
 end;
 
 function TBetterArray<T>.IndexOf(Value: T; const Comparer: IComparer<T>): Integer;

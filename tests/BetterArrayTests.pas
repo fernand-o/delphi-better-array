@@ -23,9 +23,11 @@ type
     procedure Compact;
     procedure Contains;
     procedure Count;
+    procedure DeleteIf;
     procedure First;
     procedure FirstIndexOf;
     procedure Get;
+    procedure IsEmpty;
     procedure Last;
     procedure LastIndexOf;
     procedure Map;
@@ -78,11 +80,12 @@ end;
 procedure TBetterArrayIntegerTests.Compact;
 begin
   FSUT := [1, 0, 2, 0, 0, 7, 0];
+  FSUT := FSUT.Compact;
 
-  CheckEquals(3, FSUT.Compact.Count);
-  CheckEquals(1, FSUT.Compact[0]);
-  CheckEquals(2, FSUT.Compact[1]);
-  CheckEquals(7, FSUT.Compact[2]);
+  CheckEquals(3, FSUT.Count);
+  CheckEquals(1, FSUT[0]);
+  CheckEquals(2, FSUT[1]);
+  CheckEquals(7, FSUT[2]);
 end;
 
 procedure TBetterArrayIntegerTests.Contains;
@@ -94,6 +97,18 @@ end;
 procedure TBetterArrayIntegerTests.Count;
 begin
   CheckEquals(6, FSUT.Count);
+end;
+
+procedure TBetterArrayIntegerTests.DeleteIf;
+begin
+  FSUT := [1, 4, 5, 9, 11];
+  FSUT := FSUT.DeleteIf(function(Item: Integer): Boolean
+    begin
+      Result := Item < 10;
+    end);
+
+  CheckEquals(1, FSUT.Count);
+  CheckEquals(11, FSUT[0]);
 end;
 
 procedure TBetterArrayIntegerTests.First;
@@ -113,6 +128,12 @@ begin
   CheckEquals(1, FSUT.Get(2));
   CheckEquals(9, FSUT.Get(3));
   CheckEquals(0, FSUT.Get(99));
+end;
+
+procedure TBetterArrayIntegerTests.IsEmpty;
+begin
+  FSUT := [];
+  CheckTrue(FSUT.IsEmpty);
 end;
 
 procedure TBetterArrayIntegerTests.LastIndexOf;
@@ -280,7 +301,7 @@ begin
 
       Result := Item;
     end;
-  FSUT := FSUT.Map(RemoveOlderThan70);
+  FSUT := FSUT.Map(RemoveOlderThan70).Compact;
   CheckEquals(2, FSUT.Count);
   CheckEquals('John', FSUT[0].Name);
   CheckEquals('George', FSUT[1].Name);
