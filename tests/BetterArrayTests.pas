@@ -15,8 +15,6 @@ type
   TBetterArrayIntegerTests = class(TTestCase)
   private
     FSUT: TBetterArray<Integer>;
-  public
-    procedure SetUp; override;
   published
     procedure Add;
     procedure Clear;
@@ -34,6 +32,7 @@ type
     procedure Join;
     procedure JoinQuoted;
     procedure Reverse;
+    procedure Select;
     procedure Sort;
     procedure SortWithComparer;
     procedure ToStrings;
@@ -64,6 +63,7 @@ implementation
 
 procedure TBetterArrayIntegerTests.Add;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   CheckEquals(6, FSUT.Count);
   FSUT.Add(0);
   CheckEquals(7, FSUT.Count);
@@ -90,12 +90,14 @@ end;
 
 procedure TBetterArrayIntegerTests.Contains;
 begin
+  FSUT := [5, 6, 7];
   CheckTrue(FSUT.Contains(7));
   CheckFalse(FSUT.Contains(8));
 end;
 
 procedure TBetterArrayIntegerTests.Count;
 begin
+  FSUT := [1, 2, 3, 2, 1, 0];
   CheckEquals(6, FSUT.Count);
 end;
 
@@ -113,11 +115,13 @@ end;
 
 procedure TBetterArrayIntegerTests.First;
 begin
+  FSUT := [13, 7, 1];
   CheckEquals(13, FSUT.First);
 end;
 
 procedure TBetterArrayIntegerTests.FirstIndexOf;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   CheckEquals(1, FSUT.FirstIndexOf(7));
   CheckEquals(0, FSUT.FirstIndexOf(13));
   CheckEquals(3, FSUT.FirstIndexOf(9));
@@ -125,6 +129,7 @@ end;
 
 procedure TBetterArrayIntegerTests.Get;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   CheckEquals(1, FSUT.Get(2));
   CheckEquals(9, FSUT.Get(3));
   CheckEquals(0, FSUT.Get(99));
@@ -138,6 +143,7 @@ end;
 
 procedure TBetterArrayIntegerTests.LastIndexOf;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   CheckEquals(1, FSUT.LastIndexOf(7));
   CheckEquals(0, FSUT.LastIndexOf(13));
   CheckEquals(4, FSUT.LastIndexOf(9));
@@ -145,6 +151,7 @@ end;
 
 procedure TBetterArrayIntegerTests.Map;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   FSUT := FSUT.Map(
     function(Value: Integer): Integer
     begin
@@ -162,6 +169,7 @@ end;
 
 procedure TBetterArrayIntegerTests.Reverse;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   FSUT := FSUT.Reverse;
   CheckEquals(2, FSUT[0]);
   CheckEquals(9, FSUT[1]);
@@ -190,17 +198,29 @@ end;
 
 procedure TBetterArrayIntegerTests.Last;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   CheckEquals(2, FSUT.Last);
 end;
 
-procedure TBetterArrayIntegerTests.SetUp;
+procedure TBetterArrayIntegerTests.Select;
+var
+  EvenNumber: TFunc<Integer, Boolean>;
 begin
-  inherited;
-  FSUT := [13, 7, 1, 9, 9, 2];
+  EvenNumber := function(Item: Integer): Boolean
+    begin
+      Result := Item mod 2 = 1;
+    end;
+
+  FSUT := [1, 2, 3, 4, 5, 6];
+  FSUT := FSUT.Select(EvenNumber);
+
+  CheckEquals(3, FSUT.Count);
+  CheckEquals('1,3,5', FSUT.Join);
 end;
 
 procedure TBetterArrayIntegerTests.Sort;
 begin
+  FSUT := [13, 7, 1, 9, 9, 2];
   FSUT := FSUT.Sort;
   CheckEquals(1, FSUT[0]);
   CheckEquals(2, FSUT[1]);

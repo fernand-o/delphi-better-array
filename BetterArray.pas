@@ -27,6 +27,7 @@ type
     function TypeIsClass: Boolean;
     function IndexIsValid(Index: Integer): Boolean;
     function EmptyValue: T;
+    function Extract(Func: TFunc<T, Boolean>): TBetterArray<T>;
   public
     class operator Implicit(AType: TArray<T>): TBetterArray<T>;
     class operator Implicit(AType: TBetterArray<T>): string;
@@ -63,6 +64,7 @@ type
     function JoinQuoted(Separator: string = ','; QuoteString: string = ''''): string;
     procedure Remove(Index: Integer);
     function Reverse: TBetterArray<T>;
+    function Select(Func: TFunc<T, Boolean>): TBetterArray<T>;
     function Sort: TBetterArray<T>; overload;
     function Sort(const Comparison: TComparison<T>): TBetterArray<T>; overload;
     function ToStrings(Func: TFunc<T, string>): TBetterArray<string>;
@@ -93,7 +95,7 @@ var
 begin
   Comparer := TEqualityComparer<T>.Default;
   for Item in FItems do
-    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
+    if not Comparer.Equals(Item, EmptyValue) then
       Result.Add(Item);
 end;
 
@@ -104,7 +106,7 @@ var
 begin
   Comparer := TEqualityComparer<T>.Default;
   for Item in Items do
-    if not Comparer.Equals(Item, TValue.Empty.AsType<T>) then
+    if not Comparer.Equals(Item, EmptyValue) then
       Result.Add(Item);
 end;
 
@@ -132,6 +134,25 @@ begin
 end;
 
 function TBetterArray<T>.DeleteIf(Func: TFunc<T, Boolean>): TBetterArray<T>;
+begin
+  Result := Extract(
+    function(Item: T): Boolean
+    begin
+      Result := Func(Item);
+    end);
+end;
+
+function TBetterArray<T>.EmptyValue: T;
+begin
+  Result := TValue.Empty.AsType<T>;
+end;
+
+class operator TBetterArray<T>.Explicit(AType: TArray<T>): TBetterArray<T>;
+begin
+  Result.Create(AType);
+end;
+
+function TBetterArray<T>.Extract(Func: TFunc<T, Boolean>): TBetterArray<T>;
 var
   Empty: T;
 begin
@@ -143,16 +164,6 @@ begin
       if Func(Item) then
         Result := Empty;
     end).Compact;
-end;
-
-function TBetterArray<T>.EmptyValue: T;
-begin
-  Result := TValue.Empty.AsType<T>;
-end;
-
-class operator TBetterArray<T>.Explicit(AType: TArray<T>): TBetterArray<T>;
-begin
-  Result.Create(AType);
 end;
 
 function TBetterArray<T>.First: T;
@@ -269,6 +280,15 @@ function TBetterArray<T>.Sort: TBetterArray<T>;
 begin
   Result := Copy;
   TArray.Sort<T>(Result.FItems);
+end;
+
+function TBetterArray<T>.Select(Func: TFunc<T, Boolean>): TBetterArray<T>;
+begin
+  Result := Extract(
+    function(Item: T): Boolean
+    begin
+      Result := not Func(Item);
+    end);
 end;
 
 function TBetterArray<T>.Sort(const Comparison: TComparison<T>): TBetterArray<T>;
